@@ -1,0 +1,11 @@
+version: "2"
+
+services:
+  certgen:
+    image: petekaik/openssl-certgen
+    volumes:
+      - ${CERTS}:/opt/certgen/certs
+    container_name: certgen
+    hostname: certgen
+    stdin_open: true
+    tty: true

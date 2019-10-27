@@ -1,0 +1,26 @@
+#!/bin/sh
+
+INSTALLPATH=/opt/certgen/certs
+KEY=myCA.key
+CERT=myCA.crt
+CONF=$INSTALLPATH/CA/config/myCA.conf
+OUTPUT=$INSTALLPATH/CA/generated
+
+if [ -r $CONF ]
+then
+    if ! [ -r $OUTPUT/$KEY ]
+    then
+        openssl genrsa -out $OUTPUT/$KEY 4096
+    else
+        echo "$KEY found -> Skipping key generation and moving to generating certificate"
+    fi
+    
+    if ! [ -r $OUTPUT/$CERT ]
+    then
+        openssl req -x509 -new -key $OUTPUT/$KEY -out $OUTPUT/$CERT -days 1825 -config $CONF
+    else
+        echo "$CERT found -> Skipping certification generation and moving to Done"
+    fi
+else
+    echo "$CONF not found -> Exit"
+fi

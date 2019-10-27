@@ -1,0 +1,33 @@
+#!/bin/sh
+
+INSTALLPATH=/opt/certgen/certs
+CONFIG=$INSTALLPATH/device/config
+FILES=$CONFIG/*.conf
+OUTPUT=$INSTALLPATH/device/generated
+CAKEY=$INSTALLPATH/CA/generated/myCA.key
+CACRT=$INSTALLPATH/CA/generated/myCA.crt
+CASERIAL=$INSTALLPATH/CA/.serial
+
+for FILE in $FILES
+do
+    FILENAME=$(basename "$FILE" .conf)
+    echo "Processing $FILENAME..."
+    
+    if ! [ -r $OUTPUT/$FILENAME.key ]
+    then
+        echo "Generating: $FILENAME.key"
+        openssl genrsa -out $OUTPUT/$FILENAME.key 2048
+    else
+        echo "$FILENAME.key found -> Generating certificate request"
+    fi
+    
+    echo "Generating certificate request: $FILENAME.csr"
+    openssl req -key $OUTPUT/$FILENAME.key -new -out $OUTPUT/$FILENAME.csr -config $CONFIG/$FILENAME.conf
+    
+    echo "Generating certificate: $FILENAME.crt"
+    openssl x509 -req -sha256 -in $OUTPUT/$FILENAME.csr -out $OUTPUT/$FILENAME.crt -CA $CACRT -CAkey $CAKEY -days 365 -CAcreateserial -CAserial $CASERIAL
+    
+    echo "Generating device certificate: $FILENAME.p12 with password 'testing'"
+    openssl pkcs12 -export -passout pass:testing -inkey $OUTPUT/$FILENAME.key -in $OUTPUT/$FILENAME.crt -certfile $CACRT -out $OUTPUT/$FILENAME.p12
+    
+done
